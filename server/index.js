@@ -11,8 +11,27 @@ connectDB();
 const app = express();
 const server = http.createServer(app);
 
+// 🔒 Allowed frontend origins (dev + production)
+const allowedOrigins = [
+  "http://localhost:3000", // React dev
+  "https://teal-trifle-7f9ade.netlify.app", // 🔁 REPLACE with your exact Netlify URL
+];
+
 // Middleware
-app.use(cors({ origin: "*", credentials: true }));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // allow REST tools like Thunder/Postman (no origin) and our allowed frontends
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
 // Routes
@@ -20,7 +39,11 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/messages", require("./routes/messageRoutes"));
 
 // Socket.io setup
-const io = new Server(server, { cors: { origin: "*", } ,});
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+  },
+});
 
 io.on("connection", (socket) => {
   console.log("⚡ A student/mentor connected to socket:", socket.id);
