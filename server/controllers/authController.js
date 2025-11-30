@@ -26,8 +26,10 @@ const register = async (req, res) => {
         .json({ message: "Name, email and password are required" });
     }
 
+    const emailLower = email.toLowerCase();
+
     // Check if user already exists
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    const existingUser = await User.findOne({ email: emailLower });
     if (existingUser) {
       return res
         .status(400)
@@ -45,18 +47,30 @@ const register = async (req, res) => {
       userRole = "teacher";
     }
 
-    // Allow ADMIN only when we explicitly send role="admin" from trusted tools
+    // Allow ADMIN only when we explicitly send role="admin" from trusted tools (Thunder/Postman)
     if (role === "admin") {
       userRole = "admin";
     }
 
+    // 🔒 Email domain restriction for STUDENTS only
+    if (userRole === "student") {
+      const allowedDomain = "@kongu.edu";
+      if (!emailLower.endsWith(allowedDomain)) {
+        return res.status(400).json({
+          message:
+            "Only students with @kongu.edu email can register as students. If you are a teacher, please use your mentor code.",
+        });
+      }
+    }
+    // Teachers + Admins: no domain restriction
+
     // Create user
     const user = await User.create({
       name,
-      email: email.toLowerCase(),
+      email: emailLower,
       password: hashedPassword,
       role: userRole,
-      isVerified: true, // you can later make this false and verify manually
+      isVerified: true, // later you can change this to false and add approval flow
     });
 
     const token = generateToken(user);
@@ -94,7 +108,8 @@ const login = async (req, res) => {
         .json({ message: "Email and password are required" });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const emailLower = email.toLowerCase();
+    const user = await User.findOne({ email: emailLower });
 
     if (!user) {
       return res
