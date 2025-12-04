@@ -52,28 +52,45 @@ const getMessages = async (req, res) => {
   }
 };
 
-// @route   DELETE /api/messages/:id
-// @desc    Delete a message (admin only)
-// @access  Private + Admin
+// @route DELETE /api/messages/:id
+// @desc  Soft delete a message
+// @access Private (admin only, or teacher+admin if you want)
 const deleteMessage = async (req, res) => {
   try {
-    const user = req.user;
-
-    if (user.role !== "admin") {
-      return res.status(403).json({ message: "Only admins can delete messages" });
-    }
-
-    const { id } = req.params;
-
-    const message = await Message.findById(id);
-
-    if (!message) {
+    const msg = await Message.findById(req.params.id);
+    if (!msg) {
       return res.status(404).json({ message: "Message not found" });
     }
 
-    await message.deleteOne();
+    // Only admin (or teacher + admin) can delete
+    if (req.user.role !== "admin") {
+      // if you want teachers also:
+      // if (req.user.role !== "admin" && req.user.role !== "teacher") { ... }
+      return res.status(403).json({ message: "Not allowed to delete messages" });
+    }
 
-    return res.status(200).json({ message: "Message deleted" });
+    // ✅ Soft delete: mark as deleted instead of removing
+    msg.isDeleted = true;
+    msg.deletedAt = new Date();
+    msg.deletedBy = req.user.role; // "admin" (or "teacher" if you allow)
+    msg.reactions = []; // Clear reactions when message is deleted
+    // Clear pin information when a message is deleted
+    msg.isPinned = false;
+    msg.pinnedAt = null;
+    msg.pinnedBy = null;
+
+    await msg.save();
+
+    // ✅ Broadcast to all connected clients via socket
+    const io = req.app.get("io");
+    if (io) {
+      io.to("superpaac-group").emit("messageSoftDeleted", msg._id.toString());
+    }
+
+    return res.status(200).json({
+      message: "Message removed by admin",
+      id: msg._id,
+    });
   } catch (err) {
     console.error("Delete message error:", err.message);
     return res.status(500).json({ message: "Server error deleting message" });

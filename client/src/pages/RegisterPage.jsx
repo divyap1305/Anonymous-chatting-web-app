@@ -2,9 +2,11 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
+import { useTheme } from "../contexts/ThemeContext";
 
 function RegisterPage() {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -13,6 +15,57 @@ function RegisterPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const styles = {
+    container: {
+      minHeight: "100vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: theme.colors.background,
+      color: theme.colors.textPrimary,
+    },
+    card: {
+      padding: "2rem",
+      borderRadius: "1rem",
+      background: theme.colors.surface,
+      minWidth: "320px",
+      textAlign: "center",
+      boxShadow: `0 10px 30px ${theme.colors.shadow}`,
+      border: `1px solid ${theme.colors.border}`,
+    },
+    form: {
+      display: "flex",
+      flexDirection: "column",
+      gap: "0.75rem",
+      marginTop: "1rem",
+    },
+    input: {
+      padding: "0.6rem 0.8rem",
+      borderRadius: "0.5rem",
+      border: `1px solid ${theme.colors.inputBorder}`,
+      background: theme.colors.inputBackground,
+      color: theme.colors.inputText,
+    },
+    button: {
+      marginTop: "0.5rem",
+      padding: "0.7rem",
+      borderRadius: "0.5rem",
+      border: "none",
+      background: theme.colors.success,
+      color: "#ffffff",
+      fontWeight: "600",
+      cursor: "pointer",
+    },
+    error: {
+      background: theme.colors.danger,
+      padding: "0.5rem",
+      borderRadius: "0.5rem",
+      marginBottom: "0.5rem",
+      fontSize: "0.9rem",
+      color: "#ffffff",
+    },
+  };
 
   const handleChange = (e) => {
     setForm((prev) => ({
@@ -124,54 +177,5 @@ function RegisterPage() {
     </div>
   );
 }
-
-const styles = {
-  container: {
-    minHeight: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "#020617",
-    color: "#e5e7eb",
-  },
-  card: {
-    padding: "2rem",
-    borderRadius: "1rem",
-    background: "#0f172a",
-    minWidth: "320px",
-    textAlign: "center",
-    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.4)",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.75rem",
-    marginTop: "1rem",
-  },
-  input: {
-    padding: "0.6rem 0.8rem",
-    borderRadius: "0.5rem",
-    border: "1px solid #1f2937",
-    background: "#020617",
-    color: "#e5e7eb",
-  },
-  button: {
-    marginTop: "0.5rem",
-    padding: "0.7rem",
-    borderRadius: "0.5rem",
-    border: "none",
-    background: "#22c55e",
-    color: "#020617",
-    fontWeight: "600",
-    cursor: "pointer",
-  },
-  error: {
-    background: "#7f1d1d",
-    padding: "0.5rem",
-    borderRadius: "0.5rem",
-    marginBottom: "0.5rem",
-    fontSize: "0.9rem",
-  },
-};
 
 export default RegisterPage;
